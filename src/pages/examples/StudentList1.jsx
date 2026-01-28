@@ -1,10 +1,13 @@
 import Student3 from "./Student3";
 
-function StudentList({ students }){
+function StudentList1({ students }){
+    const filteredStudents = students.filter(student => {
+        return student.percentage>33.0;
+    })
     return(
         <>
-        <h2>Student List</h2>
-        {students.map((student, index)=>(
+        <h2>Passed Student List</h2>
+        {filteredStudents.map((student, index)=>(
             <Student3
             key = {index}
             name = {student.name}
@@ -15,4 +18,4 @@ function StudentList({ students }){
         </>
     );
 }
-export default StudentList;
+export default StudentList1;
