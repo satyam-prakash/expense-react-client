@@ -10,18 +10,19 @@ function Student4(){
         {name: "Pluto", rollNumber:4},
     ];
 
-    const handleHide = () => {
-        setVisible(false);
-    }
-
-    const handleShow = () => {
+    const handleClick = () => {
+        if(visible === false){
         setVisible(true);
-    }
 
+        }
+        else{
+            setVisible(false);
+        }
+    }
     return(
         <div>
-            {visible && <button onClick={handleHide}>Hide Students</button>}
-            {!visible && <button onClick={handleShow}>Show Students</button>}
+            {visible && <button onClick={handleClick}>Hide Students</button>}
+            {!visible && <button onClick={handleClick}>Show Students</button>}
             
             {visible && (
                 <>
