@@ -2,6 +2,7 @@ import Student from './pages/examples/Student'
 import Student1 from './pages/examples/Student1'
 import Student2 from './pages/examples/Student2'
 import Student3 from './pages/examples/Student3'
+import Student4 from './pages/examples/Student4'
 import StudentList from './pages/examples/StudentList'
 import StudentList1 from './pages/examples/StudentList1'
 import UserCard from './pages/practice/userCard'
@@ -22,7 +23,7 @@ function App() {
         <Student3 name='Tommy' rollNumber={20} percentage={45.0} />
         <StudentList students={students} />
         <StudentList1 students={students} />
-        
+        <Student4/>
         <h2>User Cards</h2>
         <UserCard name="John Doe" isPremium={true} />
         <UserCard name="Jane Smith" isPremium={false} />
