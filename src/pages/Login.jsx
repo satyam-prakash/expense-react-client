@@ -1,78 +1,109 @@
 import { useState } from "react";
+import axios from "axios";
 
 function Login() {
-    const [formData, setFormData] = useState({
-        email:"",
-        password:""
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState("");
+  
+  const handleChange = (event) => {
+    const name = event.target.name;
+    const value = event.target.value;
+
+    setFormData({
+      ...formData,
+      [name]: value,
     });
-        const[error,setError] = useState({});
-    const handleChange = (event) => {
-        const name = event.target.name;
-        const value = event.target.value;
+  };
 
-        setFormData({
-            ...formData,
-            [name]: value
-        });
-    };
+  const validate = () => {
+    let newError = {};
+    let isValid = true;
 
-    const validate = () => {
-        let newErrors = {};
-        let isValid = true;
-
-        if(formData.email.length === 0){
-            newErrors.email = "Email is required";
-            isValid = false;
-        }
-        if(formData.password.length === 0){
-            newErrors.password = "Password is required";
-            isValid = false;
-        }
-        setError(newErrors);
-        return isValid;
+    if (formData.email.length === 0) {
+      newError.email = "Email is required";
+      isValid = false;
     }
+    if (formData.password.length === 0) {
+      newError.password = "Password is required";
+      isValid = false;
+    }
+    setErrors(newError);
+    return isValid;
+  };
 
-    const handleFormSubmit = (event) =>{
-        event.preventDefault();
-        if(validate()){
-            console.log('valid Form');
-        }
-        else{
-            console.log("Invalid Form");
-        }
-    };
+  const handleFormSubmit = async (event) => {
+    event.preventDefault();
+    if (validate()) {
+      try {
+        const body = {
+          email: formData.email,
+          password: formData.password,
+        };
+        const config = { withCredentials: true };
+        const response = await axios.post(
+          "http://localhost:5001/auth/login",
+          body,
+          config,
+        );
+        console.log(response);
+        setMessage("User authenticated");
+      } catch (error) {
+        console.log(error);
+        setErrors({
+          message: "Something went wrong. Please try again later",
+        });
+      }
+    } else {
+      console.log("Form has errors");
+    }
+  };
 
-    return (
-        <div className="container text-center">
-            <h3>Login to Continue </h3>
+  return (
+    <div className="container text-center">
+      <h3>Login to continue</h3>
+      {errors.message && (
+        <div className="alert alert-danger">{errors.message}</div>
+      )}
+      {message && (
+        <div className="alert alert-success">{message}</div>
+      )}
 
-            <form onSubmit={handleFormSubmit}>
-                <div>
-                    <label>Email:</label>
-                    <input 
-                    className="form-control" 
-                    type="text" 
-                    name="email"
-                    onChange={handleChange}
-                    />
-                    {error.email && <div className="text-danger">{error.email}</div>}
-                </div>
-                <div>
-                    <label>Password:</label>
-                    <input 
-                    className="form-control" 
-                    type="password" 
-                    name="password"
-                    onChange={handleChange}
-                    />
-                    {error.password && <div className="text-danger">{error.password}</div>}
-                </div>
-                <div>
-                    <button className="btn btn-primary" type="submit">Login</button>
-                </div>
-            </form>
+      <form onSubmit={handleFormSubmit}>
+        <div>
+          <label>Email: </label>
+          <input
+            className="form-control"
+            type="email"
+            name="email"
+            placeholder="Enter email"
+            onChange={handleChange}
+          />
+          {errors.email && <div className="text-danger">{errors.email}</div>}
         </div>
-    )
+        <div>
+          <label>Password: </label>
+          <input
+            className="form-control"
+            type="password"
+            name="password"
+            placeholder="Enter password"
+            onChange={handleChange}
+          />
+          {errors.password && <div className="text-danger">{errors.password}</div>}
+        </div>
+
+        <div>
+          <button className="btn btn-primary" type="submit">
+            Login
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 }
 
 export default Login;
