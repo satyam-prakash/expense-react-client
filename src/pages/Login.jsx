@@ -33,7 +33,6 @@ function Login() {
     }
 
     const handleFormSubmit = (event) =>{
-        //prevent default behaviour to complete page reload.
         event.preventDefault();
         if(validate()){
             console.log('valid Form');
@@ -56,7 +55,7 @@ function Login() {
                     name="email"
                     onChange={handleChange}
                     />
-                    {error.password &&(error.password)}
+                    {error.email && <div className="text-danger">{error.email}</div>}
                 </div>
                 <div>
                     <label>Password:</label>
@@ -66,12 +65,12 @@ function Login() {
                     name="password"
                     onChange={handleChange}
                     />
+                    {error.password && <div className="text-danger">{error.password}</div>}
+                </div>
+                <div>
+                    <button className="btn btn-primary" type="submit">Login</button>
                 </div>
             </form>
-
-            <div>
-                <button className="btn btn-primary">Login</button>
-            </div>
         </div>
     )
 }
