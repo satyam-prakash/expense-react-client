@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
-
-function Login() {
+import { useNavigate } from "react-router-dom";
+function Login({ setUser }) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -34,7 +34,7 @@ function Login() {
     setErrors(newError);
     return isValid;
   };
-
+    const navigate = useNavigate();
   const handleFormSubmit = async (event) => {
     event.preventDefault();
     if (validate()) {
@@ -49,12 +49,17 @@ function Login() {
           body,
           config,
         );
+        if (setUser) {
+          setUser(response.data.user);
+        }
         console.log(response);
         setMessage("User authenticated");
+        navigate("/",{replace:true});
       } catch (error) {
         console.log(error);
+        const errorMessage = error.response?.data?.message || "Something went wrong. Please try again later";
         setErrors({
-          message: "Something went wrong. Please try again later",
+          message: errorMessage,
         });
       }
     } else {

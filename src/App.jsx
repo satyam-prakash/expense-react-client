@@ -1,20 +1,33 @@
-import { Route, Routes } from "react-router-dom";
+import { useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 import AppLayout from "./components/AppLayout";
 function App() {
+    //value of useradetails represent whether
+    const [userDetails, setUserDetails] = useState(null);
+
     return (
         <Routes>
-            <Route path="/" element={
+            <Route path="/" element={userDetails ? (<Navigate to="/dashboard"/>):(
                 <AppLayout>
                     <Home />
                 </AppLayout>
+            )
             }/>
-            <Route path="/login" element={
+            <Route path="/login" element={userDetails ? (<Navigate to="/dashboard"/>):(
                 <AppLayout>
-                    <Login />
+                    <Login setUser={setUserDetails}/>
                 </AppLayout>
+            )
             }/>
+            <Route path="/dashboard"element={
+                userDetails?(<Dashboard user={userDetails}/>):(
+                    <Navigate to="/login"/>
+                )
+            }
+            />
         </Routes>
     );
 }
