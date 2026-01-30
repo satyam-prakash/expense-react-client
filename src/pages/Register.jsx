@@ -1,10 +1,12 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
-function Login({ setUser }) {
+function Register({ setUser }) {
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
@@ -23,12 +25,23 @@ function Login({ setUser }) {
     let newError = {};
     let isValid = true;
 
+    if (formData.name.length === 0) {
+      newError.name = "Name is required";
+      isValid = false;
+    }
     if (formData.email.length === 0) {
       newError.email = "Email is required";
       isValid = false;
     }
     if (formData.password.length === 0) {
       newError.password = "Password is required";
+      isValid = false;
+    }
+    if (formData.confirmPassword.length === 0) {
+      newError.confirmPassword = "Confirm password is required";
+      isValid = false;
+    } else if (formData.password !== formData.confirmPassword) {
+      newError.confirmPassword = "Passwords do not match";
       isValid = false;
     }
     setErrors(newError);
@@ -40,12 +53,13 @@ function Login({ setUser }) {
     if (validate()) {
       try {
         const body = {
+          name: formData.name,
           email: formData.email,
           password: formData.password,
         };
         const config = { withCredentials: true };
         const response = await axios.post(
-          "http://localhost:5001/auth/login",
+          "http://localhost:5001/auth/register",
           body,
           config,
         );
@@ -67,7 +81,7 @@ function Login({ setUser }) {
 
   return (
     <div className="container text-center">
-      <h3>Login to continue</h3>
+      <h3>Register to continue</h3>
       {errors.message && (
         <div className="alert alert-danger">{errors.message}</div>
       )}
@@ -76,6 +90,17 @@ function Login({ setUser }) {
       )}
 
       <form onSubmit={handleFormSubmit}>
+        <div>
+          <label>Name: </label>
+          <input
+            className="form-control"
+            type="text"
+            name="name"
+            placeholder="Enter your name"
+            onChange={handleChange}
+          />
+          {errors.name && <div className="text-danger">{errors.name}</div>}
+        </div>
         <div>
           <label>Email: </label>
           <input
@@ -98,18 +123,29 @@ function Login({ setUser }) {
           />
           {errors.password && <div className="text-danger">{errors.password}</div>}
         </div>
+        <div>
+          <label>Confirm Password: </label>
+          <input
+            className="form-control"
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm password"
+            onChange={handleChange}
+          />
+          {errors.confirmPassword && <div className="text-danger">{errors.confirmPassword}</div>}
+        </div>
 
         <div>
           <button className="btn btn-primary" type="submit">
-            Login
+            Register
           </button>
         </div>
       </form>
       <p className="mt-3">
-        Don't have an account? <Link to="/register">Register here</Link>
+        Already have an account? <Link to="/login">Login here</Link>
       </p>
     </div>
   );
 }
 
-export default Login;
+export default Register;
