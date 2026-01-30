@@ -1,35 +1,54 @@
-import { useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
-import Home from "./pages/Home";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
 import AppLayout from "./components/AppLayout";
-function App() {
-    //value of useradetails represent whether
-    const [userDetails, setUserDetails] = useState(null);
+import { useState } from "react";
+import Dashboard from "./pages/Dashboard";
+import Logout from "./pages/Logout";
+import UserLayout from "./components/UserLayout";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-    return (
-        <Routes>
-            <Route path="/" element={userDetails ? (<Navigate to="/dashboard"/>):(
-                <AppLayout>
-                    <Home />
-                </AppLayout>
+function App() {
+  const [userDetails, setUserDetails] = useState(null);
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            userDetails ? (
+              <Navigate to="/dashboard" />
+            ) : (
+              <Login setUser={setUserDetails} />
             )
-            }/>
-            <Route path="/login" element={userDetails ? (<Navigate to="/dashboard"/>):(
-                <AppLayout>
-                    <Login setUser={setUserDetails}/>
-                </AppLayout>
+          }
+        />
+
+        <Route
+          path="/dashboard"
+          element={
+            userDetails ? (
+              <UserLayout>
+                <Dashboard user={userDetails} />
+              </UserLayout>
+            ) : (
+              <Navigate to="/login" />
             )
-            }/>
-            <Route path="/dashboard"element={
-                userDetails?(<Dashboard user={userDetails}/>):(
-                    <Navigate to="/login"/>
-                )
-            }
-            />
-        </Routes>
-    );
+          }
+        />
+
+        <Route
+          path="/logout"
+          element={
+            userDetails ? (
+              <Logout setUser={setUserDetails} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
 }
-    
+
 export default App;

@@ -49,9 +49,7 @@ function Login({ setUser }) {
           body,
           config,
         );
-        if (setUser) {
-          setUser(response.data.user);
-        }
+        setUser(response.data.user);
         console.log(response);
         setMessage("User authenticated");
         navigate("/",{replace:true});
