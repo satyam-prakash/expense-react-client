@@ -68,7 +68,7 @@ function Login({ setUser }) {
 const handleGoogleSuccess= async(authResponse) => {
   try{
     const body = {
-    idToken: authResponse?.Credential,
+    idToken: authResponse?.credential,
   }
 const response = await axios.post("http://localhost:5001/auth/google-auth",
   body,{withCredentials: true});
