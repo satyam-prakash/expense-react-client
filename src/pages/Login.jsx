@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import {GoogleOAuthProvider,GoogleLogin} from '@react-oauth/google';
 function Login({ setUser }) {
   const [formData, setFormData] = useState({
     email: "",
@@ -64,7 +65,27 @@ function Login({ setUser }) {
       console.log("Form has errors");
     }
   };
+const handleGoogleSuccess= async(authResponse) => {
+  try{
+    const body = {
+    idToken: authResponse?.Credential,
+  }
+const response = await axios.post("http://localhost:5001/auth/google-auth",
+  body,{withCredentials: true});
+  setUser(response.data.user);
+}
+catch(error){
+  console.log(error);
+  setUser({message:"Unable to process google sso"});
+}
+};
+const handleGoogleFailure=(error) => {
+  console.log(error);
+  setErrors({
+    message: 'Something went wrong while performing google single sign-on'
+  });
 
+};
   return (
     <div className="container text-center">
       <h3>Login to continue</h3>
@@ -74,6 +95,8 @@ function Login({ setUser }) {
       {message && (
         <div className="alert alert-success">{message}</div>
       )}
+      <div className="row justify-consent-center">
+        <div className="col-6">
 
       <form onSubmit={handleFormSubmit}>
         <div>
@@ -105,6 +128,15 @@ function Login({ setUser }) {
           </button>
         </div>
       </form>
+      </div>
+      </div>
+      <div className="row justify-consent-center">
+        <div className="col-6">
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleFailure}/>
+          </GoogleOAuthProvider>
+        </div>
+        </div>
       <p className="mt-3">
         Don't have an account? <Link to="/register">Register here</Link>
       </p>
