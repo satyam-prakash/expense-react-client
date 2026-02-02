@@ -1,5 +1,6 @@
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
 import AppLayout from "./components/AppLayout";
 import {useEffect, useState } from "react";
@@ -55,6 +56,17 @@ const isUserLoggedIn = async () => {
               <Navigate to="/dashboard" />
             ) : (
               <Login setUser={setUserDetails} />
+            )
+          }
+        />
+
+        <Route
+          path="/reset-password"
+          element={
+            userDetails ? (
+              <Navigate to="/dashboard" />
+            ) : (
+              <ResetPassword />
             )
           }
         />

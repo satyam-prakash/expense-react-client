@@ -138,6 +138,9 @@ const handleGoogleFailure=(error) => {
         </div>
         </div>
       <p className="mt-3">
+        <Link to="/reset-password">Forgot Password?</Link>
+      </p>
+      <p>
         Don't have an account? <Link to="/register">Register here</Link>
       </p>
     </div>
