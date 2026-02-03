@@ -11,12 +11,14 @@
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
+    "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.4",
     "bootstrap": "^5.3.8",
     "express-validator": "^7.3.1",
     "react": "^19.2.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.0",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
