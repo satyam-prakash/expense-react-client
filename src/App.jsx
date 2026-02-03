@@ -30,7 +30,6 @@ const isUserLoggedIn = async () => {
     isUserLoggedIn();
   }, []);
   return (
-    <BrowserRouter>
       <Routes>
         <Route path="/" element={
                 userDetails ? (
@@ -96,7 +95,6 @@ const isUserLoggedIn = async () => {
           }
         />
       </Routes>
-    </BrowserRouter>
   );
 }
 

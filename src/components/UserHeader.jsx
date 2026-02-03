@@ -2,10 +2,13 @@ import { Link } from "react-router-dom";
 
 function UserHeader() {
   return (
-    <nav className="navbar navbar-expand-lg bg-body-tertiary">
-      <div className="container-fluid">
-        <Link className="navbar-brand" to="/dashboard">
-          ExpenseApp
+    <nav
+      className="navbar navbar-expand-lg bg-dark border-bottom border-body"
+      data-bs-theme="dark"
+    >
+      <div className="container">
+        <Link className="navbar-brand" to="/">
+          Dashboard
         </Link>
 
         <button
@@ -21,20 +24,27 @@ function UserHeader() {
         </button>
 
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0"></ul>
+
+          <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li className="nav-item dropdown">
               <Link
-                className="nav-link active"
-                aria-current="page"
-                to="/dashboard"
+                className="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
               >
-                Dashboard
+                Account
               </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/logout">
-                Logout
-              </Link>
+
+              <ul className="dropdown-menu dropdown-menu-end">
+                <li>
+                  <Link className="dropdown-item" to="/logout">
+                    Logout
+                  </Link>
+                </li>
+              </ul>
             </li>
           </ul>
         </div>
