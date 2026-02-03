@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import {GoogleOAuthProvider,GoogleLogin} from '@react-oauth/google';
+import { serverEndpoint } from "../config/appConfig";
 function Login({ setUser }) {
   const [formData, setFormData] = useState({
     email: "",
@@ -46,7 +47,7 @@ function Login({ setUser }) {
         };
         const config = { withCredentials: true };
         const response = await axios.post(
-          "http://localhost:5001/auth/login",
+          `${serverEndpoint}/auth/login`,
           body,
           config,
         );
@@ -70,7 +71,7 @@ const handleGoogleSuccess= async(authResponse) => {
     const body = {
     idToken: authResponse?.credential,
   }
-const response = await axios.post("http://localhost:5001/auth/google-auth",
+const response = await axios.post(`${serverEndpoint}/auth/google-auth`,
   body,{withCredentials: true});
   setUser(response.data.user);
 }

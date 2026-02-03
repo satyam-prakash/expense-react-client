@@ -9,12 +9,13 @@ import Logout from "./pages/Logout";
 import UserLayout from "./components/UserLayout";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import axios from "axios";
+import {serverEndpoint} from "./config/appConfig";
 function App() {
   const [userDetails, setUserDetails] = useState(null);
 const isUserLoggedIn = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:5001/auth/is-user-logged-in",
+        `${serverEndpoint}/auth/is-user-logged-in`,
         {},
         { withCredentials: true }
       );

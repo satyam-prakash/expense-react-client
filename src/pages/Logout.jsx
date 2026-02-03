@@ -1,15 +1,22 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
+import { Navigate, useNavigate } from "react-router-dom";
+import { serverEndpoint } from "../config/appConfig";
 function Logout({ setUser }) {
-  const navigate = useNavigate();
+  const handleLogout = async() =>{
+    try{ 
+      await axios.post(`${serverEndpoint}/auth/logout`,
+        {},
+        { withCredentials:true });
+      document.cookie = 'jwtToken=; expires=Thu, 01 jan 1970 00:00:00 UTC; path=/;';
+      setUser(null);
+    }catch(error){
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
-    setUser(null);
-    navigate("/login");
-  }, [setUser, navigate]);
-
-  return null;
+    handleLogout();
+  }, []);
 }
 
 export default Logout;
