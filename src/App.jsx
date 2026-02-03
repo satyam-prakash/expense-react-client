@@ -75,7 +75,7 @@ const isUserLoggedIn = async () => {
           path="/dashboard"
           element={
             userDetails ? (
-              <UserLayout>
+              <UserLayout user = {userDetails}>
                 <Dashboard user={userDetails} />
               </UserLayout>
             ) : (

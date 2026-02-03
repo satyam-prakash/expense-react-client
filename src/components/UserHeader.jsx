@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-function UserHeader() {
+function UserHeader({user}) {
   return (
     <nav
       className="navbar navbar-expand-lg bg-dark border-bottom border-body"
@@ -35,7 +35,7 @@ function UserHeader() {
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                Account
+                {user ? user.name:<>Account</>}
               </Link>
 
               <ul className="dropdown-menu dropdown-menu-end">
