@@ -1,8 +1,31 @@
 import {useState} from "react"
-function GroupCard( {group} ){
+import { serverEndpoint } from "../config/appConfig";
+import axios from "axios";
+function GroupCard( {group,onUpdate} ){
     const [showMembers,setShowMembers] = useState(false);
+    const [memberEmail,setMemberEmail] = useState('');
+    const [errors,setErrors] = useState({});
     const handleShowMember = ()=>{
         setShowMembers(!showMembers);
+    };
+    const handleAddMember = async() =>{
+        if(memberEmail.length===0){
+            return;
+        }
+        try{
+            const response = await axios.patch(`${serverEndpoint}/groups/members/add`,
+            {
+                groupId: group._id,
+                emails: [memberEmail]
+            },
+            {withCredentials: true}
+        );
+        onUpdate(response.data);
+        setMemberEmail('');
+        }catch(error){
+            console.log(error);
+            setErrors({message: 'Unable to add member'});
+        }
     };
     return(
             <div className="card h-100 border-0 shadow-sm rounded-4 postion-relative">
@@ -22,8 +45,17 @@ function GroupCard( {group} ){
                         ))}
                         </div>
                     )}
+                    <div className="mb-3">
+                        <label className="form-label extra-small fw-bold text-secondary">Add Member</label>
+                        <div className="input-group input-group-sm">
+                            <input type="email" className="form-control border-end-0" value={memberEmail}
+                                onChange={(e)=> setMemberEmail(e.target.value)}
+                            />
+                            <button className="btn btn-primary px-3" onClick={handleAddMember}>Add</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-    )
-};
+        );
+}
 export default GroupCard;

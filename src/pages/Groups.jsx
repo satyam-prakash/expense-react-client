@@ -21,6 +21,17 @@ function Groups() {
       setLoading(false);
     }
   };
+  const handleGroupUpdateSucess = (data) => {
+    const existingGroupIndex = groups?.findIndex(g => g._id === data._id);
+    
+    if (existingGroupIndex !== -1 && existingGroupIndex !== undefined) {
+      const updatedGroups = [...groups];
+      updatedGroups[existingGroupIndex] = data;
+      setGroups(updatedGroups);
+    } else {
+      setGroups(groups ? [...groups, data] : [data]);
+    }
+  }
 
   useEffect(() => {
     fetchGroups();
@@ -53,13 +64,13 @@ function Groups() {
         </button>
       </div>
 
-      {groups.length === 0 && <p>No groups found, Start by creating one!</p>}
+      {groups && groups.length === 0 && <p>No groups found, Start by creating one!</p>}
 
-      {groups.length > 0 && (
+      {groups && groups.length > 0 && (
         <div className="row g-4">
           {groups.map((group) => (
             <div className="col-md-6 col-lg-4" key={group._id}>
-              <GroupCard group={group} />
+              <GroupCard group={group} onUpdate={handleGroupUpdateSucess}/>
             </div>
           ))}
         </div>
@@ -68,7 +79,7 @@ function Groups() {
       <CreateGroupModal
         show={show}
         onHide={() => setShow(false)}
-        onSuccess={fetchGroups}
+        onSuccess={handleGroupUpdateSucess}
       />
     </div>
   );

@@ -28,7 +28,7 @@ function CreateGroupModal({ show, onHide, onSuccess }) {
     e.preventDefault();
     if (validate()) {
       try {
-        await axios.post(
+        const response = await axios.post(
           `${serverEndpoint}/groups/create`,
           {
             name: formData.name,
@@ -36,7 +36,7 @@ function CreateGroupModal({ show, onHide, onSuccess }) {
           },
           { withCredentials: true }
         );
-        onSuccess();
+        onSuccess(response.data.group);
         onHide();
       } catch (error) {
         setErrors({ message: "Unable to add group, please try again" });
