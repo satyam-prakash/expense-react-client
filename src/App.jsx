@@ -12,6 +12,7 @@ import axios from "axios";
 import {serverEndpoint} from "./config/appConfig";
 import { useSelector ,useDispatch} from "react-redux";
 import { SET_USER } from "./redux/user/action";
+import Groups from "./pages/Groups";
 function App() {
   const dispatch = useDispatch();
   const userDetails = useSelector((state) => state.userDetails);
@@ -96,8 +97,20 @@ function App() {
         path="/dashboard"
         element={
           userDetails ? (
-            <UserLayout user={userDetails}>
-              <Dashboard user={userDetails} />
+            <UserLayout >
+              <Dashboard/>
+            </UserLayout>
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+      <Route
+        path="/groups"
+        element={
+          userDetails ? (
+            <UserLayout >
+              <Groups/>
             </UserLayout>
           ) : (
             <Navigate to="/login" />
