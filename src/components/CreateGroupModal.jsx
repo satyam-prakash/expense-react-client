@@ -1,61 +1,54 @@
-import { useState } from "react";
 import axios from "axios";
+import { useState } from "react";
 import { serverEndpoint } from "../config/appConfig";
-function CreateGroupModal({ show, onHide }) {
-  
-  if(!show) return null;
 
-  function CreateGroup({show, onHide}) {
-   const [formData, setFormData] = useState({
-     name: "",
-     description: "",
-   });
-    const [error, setError] = useState({});
+function CreateGroupModal({ show, onHide, onSuccess }) {
+  const [formData, setFormData] = useState({ name: "", description: "" });
+  const [errors, setErrors] = useState({});
 
-    const validate = () => {
-      let isValid = true;
-
-      const newError = {};
-
-      if(formData.name.length < 3){
-        newError.name = "Name should be atleast 3 characters long";
-        isValid = false;
-      }
-
-      if(formData.description.length < 3){
-        newError.description = "Description should be atleast 3 characters long";
-        isValid = false;
-      }
-
-      setError(newError);
-      return isValid;
+  const validate = () => {
+    let isValid = true;
+    const newErrors = {};
+    if (formData.name.length < 3) {
+      newErrors.name = "Name must be atleast 3 characters long";
+      isValid = false;
+    }
+    if (formData.description.length < 3) {
+      newErrors.description = "Description must be atleast 3 characters long";
+      isValid = false;
+    }
+    setErrors(newErrors);
+    return isValid;
   };
   const onChange = (e) => {
-    const name = e.target.name;
-    const value = e.target.value;
+    const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (validate()) {
-
       try {
         await axios.post(
           `${serverEndpoint}/groups/create`,
-          {name: formData.name, description: formData.description},
-          {withCredentials: true}
-        )
+          {
+            name: formData.name,
+            description: formData.description,
+          },
+          { withCredentials: true }
+        );
+        onSuccess();
+        onHide();
       } catch (error) {
-        console.log(error);
+        setErrors({ message: "Unable to add group, please try again" });
       }
     }
-  }
+  };
+  if (!show) return null;
   return (
     <div className="modal show d-block">
       <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content border-0 rounded-0 shadow-0">
-          <form>
+        <div className="modal-content border-0 rounded-4 shadow">
+          <form onSubmit={handleSubmit}>
             <div className="modal-header border-0">
               <h5>Create Group</h5>
               <button
@@ -66,43 +59,51 @@ function CreateGroupModal({ show, onHide }) {
             </div>
             <div className="modal-body">
               <div className="mb-3">
-                <label  className="form-label small fw-bold">
-                  Group Name
-                </label>
+                <label className="form-label small fw-bold">Group Name</label>
                 <input
                   type="text"
-                  className={error.name ? "form-control is-invalid" : "form-control"}
+                  className={
+                    errors.name ? "form-control is-invalid" : "form-control"
+                  }
                   name="name"
                   value={formData.name}
                   onChange={onChange}
-                  placeholder="Enter group name"
                 />
-              {error.name && <div className="invalid-feedback">{error.name}</div>}
+                {errors.name && (
+                  <div className="invalid-feedback">{errors.name}</div>
+                )}
               </div>
               <div className="mb-3">
-                <label className="form-label small fw-bold">
-                  Group Description
-                </label>
-                <textarea
-                  className={error.description ? "form-control is-invalid" : "form-control"}
+                <label className="form-label small fw-bold">Description</label>
+                <input
+                  type="text"
+                  className={
+                    errors.description
+                      ? "form-control is-invalid"
+                      : "form-control"
+                  }
                   name="description"
                   value={formData.description}
-    onChange={onChange}
-                  rows="3"
-                  placeholder="Enter group description"
-                ></textarea>
+                  onChange={onChange}
+                />{" "}
+                {errors.description && (
+                  <div className="invalid-feedback">{errors.description}</div>
+                )}
               </div>
             </div>
             <div className="modal-footer border-0">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-light rounded-pill"
                 onClick={onHide}
               >
-                Close
+                Cancel
               </button>
-              <button type="submit" className="btn btn-primary">
-                Create Group
+              <button
+                type="submit"
+                className="btn btn-primary mx-4 rounded-pill"
+              >
+                Add
               </button>
             </div>
           </form>
@@ -111,5 +112,5 @@ function CreateGroupModal({ show, onHide }) {
     </div>
   );
 }
-}
+
 export default CreateGroupModal;
