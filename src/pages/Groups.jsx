@@ -3,11 +3,14 @@ import { useEffect, useState } from "react";
 import { serverEndpoint } from "../config/appConfig";
 import GroupCard from "../components/GroupCard";
 import CreateGroupModal from "../components/CreateGroupModal";
+import EditGroupModal from "../components/EditGroupModal";
 
 function Groups() {
   const [groups, setGroups] = useState(null);
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
   const fetchGroups = async () => {
     try {
@@ -32,6 +35,11 @@ function Groups() {
       setGroups(groups ? [...groups, data] : [data]);
     }
   }
+
+  const handleEditGroup = (group) => {
+    setSelectedGroup(group);
+    setShowEditModal(true);
+  };
 
   useEffect(() => {
     fetchGroups();
@@ -70,7 +78,11 @@ function Groups() {
         <div className="row g-4">
           {groups.map((group) => (
             <div className="col-md-6 col-lg-4" key={group._id}>
-              <GroupCard group={group} onUpdate={handleGroupUpdateSucess}/>
+              <GroupCard 
+                group={group} 
+                onUpdate={handleGroupUpdateSucess}
+                onEdit={handleEditGroup}
+              />
             </div>
           ))}
         </div>
@@ -80,6 +92,13 @@ function Groups() {
         show={show}
         onHide={() => setShow(false)}
         onSuccess={handleGroupUpdateSucess}
+      />
+
+      <EditGroupModal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        onSuccess={handleGroupUpdateSucess}
+        group={selectedGroup}
       />
     </div>
   );
