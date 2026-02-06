@@ -17,6 +17,7 @@ function Groups() {
       const response = await axios.get(`${serverEndpoint}/groups/my-groups`, {
         withCredentials: true,
       });
+      console.log('Fetched groups:', response.data);
       setGroups(response.data);
     } catch (error) {
       console.log(error);
@@ -39,6 +40,10 @@ function Groups() {
   const handleEditGroup = (group) => {
     setSelectedGroup(group);
     setShowEditModal(true);
+  };
+
+  const handleDeleteGroup = (groupId) => {
+    setGroups(groups.filter(g => g._id !== groupId));
   };
 
   useEffect(() => {
@@ -82,6 +87,7 @@ function Groups() {
                 group={group} 
                 onUpdate={handleGroupUpdateSucess}
                 onEdit={handleEditGroup}
+                onDelete={handleDeleteGroup}
               />
             </div>
           ))}

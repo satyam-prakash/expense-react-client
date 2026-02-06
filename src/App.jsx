@@ -13,6 +13,7 @@ import {serverEndpoint} from "./config/appConfig";
 import { useSelector ,useDispatch} from "react-redux";
 import { SET_USER } from "./redux/user/action";
 import Groups from "./pages/Groups";
+import ManageUsers from "./pages/ManageUsers";
 function App() {
   const dispatch = useDispatch();
   const userDetails = useSelector((state) => state.userDetails);
@@ -111,6 +112,18 @@ function App() {
           userDetails ? (
             <UserLayout >
               <Groups/>
+            </UserLayout>
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+      <Route
+        path="/manage-users"
+        element={
+          userDetails ? (
+            <UserLayout >
+              <ManageUsers/>
             </UserLayout>
           ) : (
             <Navigate to="/login" />

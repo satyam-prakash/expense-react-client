@@ -49,6 +49,11 @@ function UserHeader({}) {
 
               <ul className="dropdown-menu dropdown-menu-end">
                 <li>
+                  <Link className="dropdown-item" to="/manage-users">
+                    Manage Users
+                  </Link>
+                </li>
+                <li>
                   <Link className="dropdown-item" to="/logout">
                     Logout
                   </Link>

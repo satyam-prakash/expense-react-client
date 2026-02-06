@@ -2,7 +2,7 @@ import {useState} from "react"
 import { serverEndpoint } from "../config/appConfig";
 import axios from "axios";
 
-function GroupCard( {group, onUpdate, onEdit} ){
+function GroupCard( {group, onUpdate, onEdit, onDelete} ){
     const [showMembers,setShowMembers] = useState(false);
     const [memberEmail,setMemberEmail] = useState('');
     const [errors,setErrors] = useState({});
@@ -46,6 +46,20 @@ function GroupCard( {group, onUpdate, onEdit} ){
             setErrors({message: 'Unable to remove member'});
         }
     };
+
+    const handleDeleteGroup = async() =>{
+        if(window.confirm(`Are you sure you want to delete the group "${group.name}"?`)){
+            try{
+                await axios.delete(`${serverEndpoint}/groups/${group._id}`,
+                    {withCredentials: true}
+                );
+                onDelete(group._id);
+            }catch(error){
+                console.log(error);
+                setErrors({message: 'Unable to delete group'});
+            }
+        }
+    };
     return(
             <div className="card h-100 border-0 shadow-sm rounded-4 postion-relative">
                 <div className="card-body p-4">
@@ -56,13 +70,22 @@ function GroupCard( {group, onUpdate, onEdit} ){
                                 {group.membersEmail.length} Member | {showMembers ? 'Hide' : 'Show'} Members
                             </button>
                         </div>
-                        <button 
-                            className="btn btn-sm btn-outline-secondary rounded-circle" 
-                            onClick={() => onEdit(group)}
-                            title="Edit Group"
-                        >
-                            <i className="bi bi-pencil"></i>
-                        </button>
+                        <div className="d-flex gap-2">
+                            <button 
+                                className="btn btn-sm btn-outline-secondary rounded-circle" 
+                                onClick={() => onEdit(group)}
+                                title="Edit Group"
+                            >
+                                <i className="bi bi-pencil"></i>
+                            </button>
+                            <button 
+                                className="btn btn-sm btn-outline-danger rounded-circle" 
+                                onClick={handleDeleteGroup}
+                                title="Delete Group"
+                            >
+                                <i className="bi bi-trash"></i>
+                            </button>
+                        </div>
                     </div>
                     <p>{group.description}</p>
                     {showMembers &&(<div className="rounded-3 p-3 mb-3 border">
