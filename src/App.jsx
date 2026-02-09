@@ -3,34 +3,35 @@ import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
 import AppLayout from "./components/AppLayout";
-import {useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Dashboard from "./pages/Dashboard";
 import Logout from "./pages/Logout";
 import UserLayout from "./components/UserLayout";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import axios from "axios";
-import {serverEndpoint} from "./config/appConfig";
-import { useSelector ,useDispatch} from "react-redux";
+import { serverEndpoint } from "./config/appConfig";
+import { useSelector, useDispatch } from "react-redux";
 import { SET_USER } from "./redux/user/action";
 import Groups from "./pages/Groups";
 import ManageUsers from "./pages/ManageUsers";
+import GroupExpenses from "./pages/GroupExpenses";
 function App() {
   const dispatch = useDispatch();
   const userDetails = useSelector((state) => state.userDetails);
   const [loading, setLoading] = useState(true);
-  
+
   const isUserLoggedIn = async () => {
     try {
       const response = await axios.post(
         `${serverEndpoint}/auth/is-user-logged-in`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       // setUserDetails(response.data.user);
       dispatch({
         type: SET_USER,
-        payload: response.data.user
+        payload: response.data.user,
       });
     } catch (error) {
       console.log(error);
@@ -49,11 +50,11 @@ function App() {
 
   return (
     <Routes>
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
           userDetails ? (
-            <Navigate to="/dashboard" />
+            <Navigate to="/groups" />
           ) : (
             <AppLayout>
               <Home />
@@ -63,43 +64,25 @@ function App() {
       />
       <Route
         path="/register"
-        element={
-          userDetails ? (
-            <Navigate to="/dashboard" />
-          ) : (
-            <Register />
-          )
-        }
+        element={userDetails ? <Navigate to="/groups" /> : <Register />}
       />
 
       <Route
         path="/login"
-        element={
-          userDetails ? (
-            <Navigate to="/dashboard" />
-          ) : (
-            <Login />
-          )
-        }
+        element={userDetails ? <Navigate to="/groups" /> : <Login />}
       />
 
       <Route
         path="/reset-password"
-        element={
-          userDetails ? (
-            <Navigate to="/dashboard" />
-          ) : (
-            <ResetPassword />
-          )
-        }
+        element={userDetails ? <Navigate to="/groups" /> : <ResetPassword />}
       />
 
       <Route
-        path="/dashboard"
+        path="/groups"
         element={
           userDetails ? (
-            <UserLayout >
-              <Dashboard/>
+            <UserLayout>
+              <Groups />
             </UserLayout>
           ) : (
             <Navigate to="/login" />
@@ -107,11 +90,23 @@ function App() {
         }
       />
       <Route
-        path="/groups"
+        path="/dashboard"
         element={
           userDetails ? (
-            <UserLayout >
-              <Groups/>
+            <UserLayout>
+              <Dashboard />
+            </UserLayout>
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+      <Route
+        path="/groups/:groupId"
+        element={
+          userDetails ? (
+            <UserLayout>
+              <GroupExpenses />
             </UserLayout>
           ) : (
             <Navigate to="/login" />
@@ -122,8 +117,8 @@ function App() {
         path="/manage-users"
         element={
           userDetails ? (
-            <UserLayout >
-              <ManageUsers/>
+            <UserLayout>
+              <ManageUsers />
             </UserLayout>
           ) : (
             <Navigate to="/login" />
@@ -133,13 +128,7 @@ function App() {
 
       <Route
         path="/logout"
-        element={
-          userDetails ? (
-            <Logout />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
+        element={userDetails ? <Logout /> : <Navigate to="/login" />}
       />
     </Routes>
   );
