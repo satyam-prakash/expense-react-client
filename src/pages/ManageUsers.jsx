@@ -14,6 +14,10 @@ function ManageUsers() {
     email: "",
     role: "Select",
   });
+  const [editingUser, setEditingUser] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   const userPermissions = usePermissions();
 
   const fetchUsers = async () => {
@@ -73,8 +77,27 @@ function ManageUsers() {
           },
           { withCredentials: true },
         );
-        setUsers([...users, response.data.user]);
-        setMessage("User added!");
+
+        // Check if user already exists in the list
+        const existingUserIndex = users.findIndex(u => u._id === response.data.user._id);
+
+        if (existingUserIndex !== -1) {
+          // Update existing user in the list
+          const updatedUsers = [...users];
+          updatedUsers[existingUserIndex] = response.data.user;
+          setUsers(updatedUsers);
+        } else {
+          // Add new user to the list
+          setUsers([...users, response.data.user]);
+        }
+
+        // Show appropriate message based on whether it's a new or existing user
+        if (response.data.isExistingUser) {
+          setMessage("Access granted! User can login with their existing credentials.");
+        } else {
+          setMessage("User created! Temporary password sent to their email.");
+        }
+
         setFormData({ name: "", email: "", role: "Select" });
       } catch (error) {
         console.log(error);
@@ -83,6 +106,65 @@ function ManageUsers() {
       } finally {
         setActionLoading(false);
       }
+    }
+  };
+
+  const handleEdit = (user) => {
+    setEditingUser(user);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      const response = await axios.put(
+        `${serverEndpoint}/users/`,
+        {
+          userId: editingUser._id,
+          name: editingUser.name,
+          role: editingUser.role,
+        },
+        { withCredentials: true }
+      );
+
+      const updatedUsers = users.map(u =>
+        u._id === editingUser._id ? response.data.user : u
+      );
+      setUsers(updatedUsers);
+      setMessage("User updated successfully!");
+      setShowEditModal(false);
+      setEditingUser(null);
+    } catch (error) {
+      console.log(error);
+      setErrors({ message: "Unable to update user, please try again" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setActionLoading(true);
+    try {
+      await axios.delete(`${serverEndpoint}/users/`, {
+        data: { userId: userToDelete._id },
+        withCredentials: true,
+      });
+
+      setUsers(users.filter(u => u._id !== userToDelete._id));
+      setMessage("User deleted successfully!");
+      setShowDeleteModal(false);
+      setUserToDelete(null);
+    } catch (error) {
+      console.log(error);
+      setErrors({ message: "Unable to delete user, please try again" });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -129,73 +211,77 @@ function ManageUsers() {
                 <h5>Add Member</h5>
               </div>
               <div className="card-body p-2">
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label className="form-label">Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    className={
-                      errors.name ? "form-control is-invalid" : "form-control"
-                    }
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
-                  {errors.name && (
-                    <div className="invalid-feedback ps-1">{errors.name}</div>
-                  )}
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label">Email</label>
-                  <input
-                    type="text"
-                    name="email"
-                    className={
-                      errors.email ? "form-control is-invalid" : "form-control"
-                    }
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                  {errors.email && (
-                    <div className="invalid-feedback ps-1">{errors.email}</div>
-                  )}
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label">Role</label>
-                  <select
-                    name="role"
-                    className={
-                      errors.role ? "form-select is-invalid" : "form-select"
-                    }
-                    value={formData.role}
-                    onChange={handleChange}
-                  >
-                    <option value="Select">Select</option>
-                    <option value="manager">Manager</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
-                  {errors.role && (
-                    <div className="invalid-feedback ps-1">{errors.role}</div>
-                  )}
-                </div>
-
-                <div className="mb-3">
-                  <button className="btn btn-primary w-100">
-                    {actionLoading ? (
-                      <div className="spinner-border" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
-                    ) : (
-                      <>Add</>
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <label className="form-label">Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      className={
+                        errors.name ? "form-control is-invalid" : "form-control"
+                      }
+                      value={formData.name}
+                      onChange={handleChange}
+                    />
+                    {errors.name && (
+                      <div className="invalid-feedback ps-1">{errors.name}</div>
                     )}
-                  </button>
-                </div>
-              </form>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Email</label>
+                    <input
+                      type="text"
+                      name="email"
+                      className={
+                        errors.email ? "form-control is-invalid" : "form-control"
+                      }
+                      value={formData.email}
+                      onChange={handleChange}
+                    />
+                    {errors.email && (
+                      <div className="invalid-feedback ps-1">{errors.email}</div>
+                    )}
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Role</label>
+                    <select
+                      name="role"
+                      className={
+                        errors.role ? "form-select is-invalid" : "form-select"
+                      }
+                      value={formData.role}
+                      onChange={handleChange}
+                    >
+                      <option value="Select">Select</option>
+                      <option value="manager">Manager</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                    {errors.role && (
+                      <div className="invalid-feedback ps-1">{errors.role}</div>
+                    )}
+                  </div>
+
+                  <div className="mb-3">
+                    <button className="btn btn-primary w-100">
+                      {actionLoading ? (
+                        <div className="spinner-border" role="status">
+                          <span className="visually-hidden">Loading...</span>
+                        </div>
+                      ) : (
+                        <>Add</>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="alert alert-info p-2 small mb-0">
+                    <strong>Note:</strong> New users will receive a temporary password via email. Existing users can use their current credentials.
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
         )}
 
         <div className={userPermissions.canCreateUsers ? "col-md-9" : "col-md-12"}>
@@ -219,12 +305,12 @@ function ManageUsers() {
                   <tbody>
                     {users.length === 0 && (
                       <tr>
-                        <td 
+                        <td
                           colSpan={
-                            (userPermissions.canUpdateUsers || userPermissions.canDeleteUsers) 
-                              ? 4 
+                            (userPermissions.canUpdateUsers || userPermissions.canDeleteUsers)
+                              ? 4
                               : 3
-                          } 
+                          }
                           className="text-center py-4 text-muted"
                         >
                           No users found. Start by adding one!
@@ -240,12 +326,18 @@ function ManageUsers() {
                           {(userPermissions.canUpdateUsers || userPermissions.canDeleteUsers) && (
                             <td className="align-middle">
                               {userPermissions.canUpdateUsers && (
-                                <button className="btn btn-link text-primary">
+                                <button
+                                  className="btn btn-link text-primary"
+                                  onClick={() => handleEdit(user)}
+                                >
                                   Edit
                                 </button>
                               )}
                               {userPermissions.canDeleteUsers && (
-                                <button className="btn btn-link text-danger">
+                                <button
+                                  className="btn btn-link text-danger"
+                                  onClick={() => handleDeleteClick(user)}
+                                >
                                   Delete
                                 </button>
                               )}
@@ -260,6 +352,119 @@ function ManageUsers() {
           </div>
         </div>
       </div>
+
+      {/* Edit User Modal */}
+      {showEditModal && editingUser && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Edit User</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowEditModal(false)}
+                ></button>
+              </div>
+              <form onSubmit={handleUpdateUser}>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label">Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editingUser.name}
+                      onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Email</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editingUser.email}
+                      disabled
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Role</label>
+                    <select
+                      className="form-select"
+                      value={editingUser.role}
+                      onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                    >
+                      <option value="manager">Manager</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowEditModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    {actionLoading ? (
+                      <div className="spinner-border spinner-border-sm" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && userToDelete && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Delete</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowDeleteModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to delete <strong>{userToDelete.name}</strong>?</p>
+                <p className="text-muted small">This action cannot be undone.</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowDeleteModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteConfirm}
+                >
+                  {actionLoading ? (
+                    <div className="spinner-border spinner-border-sm" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  ) : (
+                    "Delete"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
