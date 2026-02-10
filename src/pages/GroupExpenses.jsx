@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { serverEndpoint } from "../config/appConfig";
 import AddExpenseModal from "../components/AddExpenseModal";
+import EditExpenseModal from "../components/EditExpenseModal";
 
 function GroupExpenses() {
     const { groupId } = useParams();
@@ -13,7 +14,11 @@ function GroupExpenses() {
     const [error, setError] = useState(null);
     const [showSettleModal, setShowSettleModal] = useState(false);
     const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+    const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedExpense, setSelectedExpense] = useState(null);
     const [settling, setSettling] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [currentUserEmail, setCurrentUserEmail] = useState("");
 
     useEffect(() => {
@@ -73,6 +78,37 @@ function GroupExpenses() {
             setSettling(false);
         }
     };
+
+    const handleDeleteExpense = async () => {
+        setDeleting(true);
+        try {
+            await axios.delete(
+                `${serverEndpoint}/expenses/${selectedExpense._id}`,
+                { withCredentials: true }
+            );
+
+            setShowDeleteModal(false);
+            setSelectedExpense(null);
+            await fetchGroupData();
+            alert("Expense deleted successfully!");
+        } catch (error) {
+            console.error("Error deleting expense:", error);
+            alert(error.response?.data?.message || "Failed to delete expense");
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    const handleEditClick = (expense) => {
+        setSelectedExpense(expense);
+        setShowEditExpenseModal(true);
+    };
+
+    const handleDeleteClick = (expense) => {
+        setSelectedExpense(expense);
+        setShowDeleteModal(true);
+    };
+
 
     if (loading) {
         return (
@@ -232,6 +268,7 @@ function GroupExpenses() {
                                         <th>Paid By</th>
                                         <th>Amount</th>
                                         <th>Split Type</th>
+                                        {!group?.isSettled && <th>Actions</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -258,6 +295,30 @@ function GroupExpenses() {
                                                     {expense.splitType}
                                                 </span>
                                             </td>
+                                            {!group?.isSettled && (
+                                                <td>
+                                                    <div className="btn-group btn-group-sm">
+                                                        {expense.createdBy === currentUserEmail && (
+                                                            <>
+                                                                <button
+                                                                    className="btn btn-outline-primary"
+                                                                    onClick={() => handleEditClick(expense)}
+                                                                    title="Edit"
+                                                                >
+                                                                    <i className="bi bi-pencil"></i>
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-outline-danger"
+                                                                    onClick={() => handleDeleteClick(expense)}
+                                                                    title="Delete"
+                                                                >
+                                                                    <i className="bi bi-trash"></i>
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
@@ -331,6 +392,60 @@ function GroupExpenses() {
                 </div>
             )}
 
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && selectedExpense && (
+                <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Delete Expense</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowDeleteModal(false)}
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <p>Are you sure you want to delete this expense?</p>
+                                <div className="alert alert-warning">
+                                    <strong>{selectedExpense.title}</strong><br />
+                                    Amount: ₹{selectedExpense.amount.toFixed(2)}<br />
+                                    Date: {new Date(selectedExpense.date).toLocaleDateString()}
+                                </div>
+                                <p className="text-muted small">This action cannot be undone.</p>
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowDeleteModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    onClick={handleDeleteExpense}
+                                    disabled={deleting}
+                                >
+                                    {deleting ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2"></span>
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-trash me-2"></i>
+                                            Delete
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Add Expense Modal */}
             <AddExpenseModal
                 show={showAddExpenseModal}
@@ -338,6 +453,18 @@ function GroupExpenses() {
                 groupId={groupId}
                 groupMembers={group?.membersEmail}
                 onExpenseAdded={fetchGroupData}
+            />
+
+            {/* Edit Expense Modal */}
+            <EditExpenseModal
+                show={showEditExpenseModal}
+                onClose={() => {
+                    setShowEditExpenseModal(false);
+                    setSelectedExpense(null);
+                }}
+                expense={selectedExpense}
+                groupMembers={group?.membersEmail}
+                onExpenseUpdated={fetchGroupData}
             />
         </div>
     );

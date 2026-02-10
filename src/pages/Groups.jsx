@@ -3,12 +3,16 @@ import { serverEndpoint } from "../config/appConfig";
 import { useEffect, useState } from "react";
 import GroupCard from "../components/GroupCard";
 import CreateGroupModal from "../components/CreateGroupModal";
+import EditGroupModal from "../components/EditGroupModal";
 import { usePermissions } from "../rbac/userPermissions";
 
 function Groups() {
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [show, setShow] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedGroup, setSelectedGroup] = useState(null);
+    const [currentUserEmail, setCurrentUserEmail] = useState("");
     const userPermissions = usePermissions();
 
     const fetchGroups = async () => {
@@ -38,8 +42,29 @@ function Groups() {
         });
     };
 
+    const fetchCurrentUser = async () => {
+        try {
+            const response = await axios.post(`${serverEndpoint}/auth/is-user-logged-in`, {}, {
+                withCredentials: true,
+            });
+            setCurrentUserEmail(response.data.user.email);
+        } catch (error) {
+            console.error("Error fetching current user:", error);
+        }
+    };
+
+    const handleEditGroup = (group) => {
+        setSelectedGroup(group);
+        setShowEditModal(true);
+    };
+
+    const handleDeleteGroup = (groupId) => {
+        setGroups(prevGroups => prevGroups.filter(g => g._id !== groupId));
+    };
+
     useEffect(() => {
         fetchGroups();
+        fetchCurrentUser();
     }, []);
 
     if (loading) {
@@ -123,6 +148,9 @@ function Groups() {
                             <GroupCard
                                 group={group}
                                 onUpdate={handleGroupUpdateSuccess}
+                                onDelete={handleDeleteGroup}
+                                onEdit={handleEditGroup}
+                                currentUserEmail={currentUserEmail}
                             />
                         </div>
                     ))}
@@ -132,6 +160,16 @@ function Groups() {
             <CreateGroupModal
                 show={show}
                 onHide={() => setShow(false)}
+                onSuccess={handleGroupUpdateSuccess}
+            />
+
+            <EditGroupModal
+                show={showEditModal}
+                onHide={() => {
+                    setShowEditModal(false);
+                    setSelectedGroup(null);
+                }}
+                group={selectedGroup}
                 onSuccess={handleGroupUpdateSuccess}
             />
         </div>

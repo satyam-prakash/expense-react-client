@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { serverEndpoint } from "../config/appConfig";
 
-function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded }) {
+function EditExpenseModal({ show, onClose, expense, groupMembers, onExpenseUpdated }) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
         amount: "",
         category: "Other",
         splitType: "equal",
-        date: new Date().toISOString().split('T')[0]
+        date: ""
     });
 
     const [selectedMembers, setSelectedMembers] = useState([]);
@@ -18,18 +18,31 @@ function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded 
     const [error, setError] = useState("");
 
     useEffect(() => {
-        if (show && groupMembers) {
-            // Select all members by default
-            setSelectedMembers(groupMembers.map(m => m));
-
-            // Initialize custom splits
-            const initialSplits = {};
-            groupMembers.forEach(email => {
-                initialSplits[email] = { amount: 0, percentage: 0 };
+        if (show && expense) {
+            setFormData({
+                title: expense.title || "",
+                description: expense.description || "",
+                amount: expense.amount || "",
+                category: expense.category || "Other",
+                splitType: expense.splitType || "equal",
+                date: expense.date ? new Date(expense.date).toISOString().split('T')[0] : ""
             });
-            setCustomSplits(initialSplits);
+
+            // Set selected members from splitDetails
+            const members = expense.splitDetails?.map(s => s.email) || [];
+            setSelectedMembers(members);
+
+            // Initialize custom splits from existing data
+            const splits = {};
+            expense.splitDetails?.forEach(split => {
+                splits[split.email] = {
+                    amount: split.amount || 0,
+                    percentage: split.percentage || 0
+                };
+            });
+            setCustomSplits(splits);
         }
-    }, [show, groupMembers]);
+    }, [show, expense]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -107,7 +120,6 @@ function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded 
         e.preventDefault();
         setError("");
 
-        // Validation
         if (selectedMembers.length === 0) {
             setError("Please select at least one member");
             return;
@@ -124,56 +136,28 @@ function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded 
         try {
             const splitDetails = calculateSplitDetails();
 
-            console.log('Group members:', groupMembers);
-            console.log('Selected members:', selectedMembers);
-            console.log('Calculated split details:', splitDetails);
-
             const expenseData = {
                 title: formData.title,
                 description: formData.description,
                 amount: parseFloat(formData.amount),
                 category: formData.category,
-                groupId,
                 splitType: formData.splitType,
                 splitDetails,
                 date: formData.date
             };
 
-            console.log('Sending expense data:', expenseData);
-
-            await axios.post(`${serverEndpoint}/expenses/create`, expenseData, {
+            await axios.put(`${serverEndpoint}/expenses/${expense._id}`, expenseData, {
                 withCredentials: true
             });
 
-            onExpenseAdded();
+            onExpenseUpdated();
             onClose();
-            resetForm();
         } catch (error) {
-            console.error("Error creating expense:", error);
-            console.error("Error response data:", error.response?.data);
-            console.error("Error response status:", error.response?.status);
-            console.error("Validation errors:", error.response?.data?.errors);
-            setError(error.response?.data?.message || "Failed to create expense");
-            if (error.response?.data?.errors) {
-                console.table(error.response.data.errors);
-            }
+            console.error("Error updating expense:", error);
+            setError(error.response?.data?.message || "Failed to update expense");
         } finally {
             setLoading(false);
         }
-    };
-
-    const resetForm = () => {
-        setFormData({
-            title: "",
-            description: "",
-            amount: "",
-            category: "Other",
-            splitType: "equal",
-            date: new Date().toISOString().split('T')[0]
-        });
-        setSelectedMembers([]);
-        setCustomSplits({});
-        setError("");
     };
 
     if (!show) return null;
@@ -189,8 +173,8 @@ function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded 
                 <div className="modal-content">
                     <div className="modal-header">
                         <h5 className="modal-title">
-                            <i className="bi bi-plus-circle me-2"></i>
-                            Add Expense
+                            <i className="bi bi-pencil me-2"></i>
+                            Edit Expense
                         </h5>
                         <button type="button" className="btn-close" onClick={onClose}></button>
                     </div>
@@ -272,12 +256,12 @@ function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded 
                                             type="radio"
                                             className="btn-check"
                                             name="splitType"
-                                            id="splitEqual"
+                                            id="editSplitEqual"
                                             value="equal"
                                             checked={formData.splitType === "equal"}
                                             onChange={handleInputChange}
                                         />
-                                        <label className="btn btn-outline-primary" htmlFor="splitEqual">
+                                        <label className="btn btn-outline-primary" htmlFor="editSplitEqual">
                                             <i className="bi bi-pie-chart me-2"></i>
                                             Equal
                                         </label>
@@ -286,12 +270,12 @@ function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded 
                                             type="radio"
                                             className="btn-check"
                                             name="splitType"
-                                            id="splitExact"
+                                            id="editSplitExact"
                                             value="exact"
                                             checked={formData.splitType === "exact"}
                                             onChange={handleInputChange}
                                         />
-                                        <label className="btn btn-outline-primary" htmlFor="splitExact">
+                                        <label className="btn btn-outline-primary" htmlFor="editSplitExact">
                                             <i className="bi bi-currency-rupee me-2"></i>
                                             Custom Amount
                                         </label>
@@ -300,12 +284,12 @@ function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded 
                                             type="radio"
                                             className="btn-check"
                                             name="splitType"
-                                            id="splitPercentage"
+                                            id="editSplitPercentage"
                                             value="percentage"
                                             checked={formData.splitType === "percentage"}
                                             onChange={handleInputChange}
                                         />
-                                        <label className="btn btn-outline-primary" htmlFor="splitPercentage">
+                                        <label className="btn btn-outline-primary" htmlFor="editSplitPercentage">
                                             <i className="bi bi-percent me-2"></i>
                                             Percentage
                                         </label>
@@ -404,12 +388,12 @@ function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded 
                                 {loading ? (
                                     <>
                                         <span className="spinner-border spinner-border-sm me-2"></span>
-                                        Creating...
+                                        Updating...
                                     </>
                                 ) : (
                                     <>
-                                        <i className="bi bi-plus-circle me-2"></i>
-                                        Add Expense
+                                        <i className="bi bi-check-circle me-2"></i>
+                                        Update Expense
                                     </>
                                 )}
                             </button>
@@ -421,4 +405,4 @@ function AddExpenseModal({ show, onClose, groupId, groupMembers, onExpenseAdded 
     );
 }
 
-export default AddExpenseModal;
+export default EditExpenseModal;

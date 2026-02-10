@@ -4,10 +4,12 @@ import { Link } from "react-router-dom";
 import { serverEndpoint } from "../config/appConfig";
 import { usePermissions } from "../rbac/userPermissions";
 
-function GroupCard({ group, onUpdate }) {
+function GroupCard({ group, onUpdate, onDelete, onEdit, currentUserEmail }) {
     const [showMembers, setShowMembers] = useState(false);
     const [memberEmail, setMemberEmail] = useState("");
     const [errors, setErrors] = useState({});
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const userPermissions = usePermissions();
 
     const handleShowMember = () => setShowMembers(!showMembers);
@@ -32,6 +34,45 @@ function GroupCard({ group, onUpdate }) {
         }
     };
 
+    const handleRemoveMember = async (emailToRemove) => {
+        if (group.membersEmail.length <= 1) {
+            setErrors({ message: "Cannot remove the last member" });
+            return;
+        }
+
+        try {
+            const response = await axios.patch(
+                `${serverEndpoint}/groups/members/remove`,
+                {
+                    groupId: group._id,
+                    emails: [emailToRemove],
+                },
+                { withCredentials: true }
+            );
+            onUpdate(response.data);
+        } catch (error) {
+            console.log(error);
+            setErrors({ message: "Unable to remove member" });
+        }
+    };
+
+    const handleDeleteGroup = async () => {
+        setDeleting(true);
+        try {
+            await axios.delete(
+                `${serverEndpoint}/groups/${group._id}`,
+                { withCredentials: true }
+            );
+            setShowDeleteModal(false);
+            if (onDelete) onDelete(group._id);
+        } catch (error) {
+            console.log(error);
+            setErrors({ message: "Unable to delete group" });
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     return (
         <div className="card h-100 border-0 shadow-sm rounded-4 transition-hover">
             <div className="card-body p-4 d-flex flex-column">
@@ -39,12 +80,33 @@ function GroupCard({ group, onUpdate }) {
                     <div className="bg-primary bg-opacity-10 p-2 rounded-3 text-primary mb-2">
                         <i className="bi bi-collection-fill fs-4"></i>
                     </div>
-                    {group.adminEmail && (
+                    {group.adminEmail === currentUserEmail && (
+                        <div className="btn-group btn-group-sm">
+                            <button
+                                className="btn btn-outline-primary btn-sm"
+                                onClick={() => onEdit && onEdit(group)}
+                                title="Edit Group"
+                            >
+                                <i className="bi bi-pencil"></i>
+                            </button>
+                            <button
+                                className="btn btn-outline-danger btn-sm"
+                                onClick={() => setShowDeleteModal(true)}
+                                title="Delete Group"
+                            >
+                                <i className="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {group.adminEmail && (
+                    <div className="mb-2">
                         <span className="badge rounded-pill bg-light text-dark border fw-normal small">
                             Admin: {group.adminEmail.split("@")[0]}
                         </span>
-                    )}
-                </div>
+                    </div>
+                )}
 
                 <h5 className="fw-bold mb-1 text-dark text-truncate">
                     {group.name}
@@ -82,24 +144,35 @@ function GroupCard({ group, onUpdate }) {
                             {group.membersEmail.map((member, index) => (
                                 <div
                                     key={index}
-                                    className="d-flex align-items-center mb-2 last-child-mb-0"
+                                    className="d-flex align-items-center justify-content-between mb-2 last-child-mb-0"
                                 >
-                                    <div
-                                        className="rounded-circle bg-white border d-flex align-items-center justify-content-center me-2 fw-bold text-primary shadow-sm"
-                                        style={{
-                                            width: "24px",
-                                            height: "24px",
-                                            fontSize: "10px",
-                                        }}
-                                    >
-                                        {member.charAt(0).toUpperCase()}
+                                    <div className="d-flex align-items-center">
+                                        <div
+                                            className="rounded-circle bg-white border d-flex align-items-center justify-content-center me-2 fw-bold text-primary shadow-sm"
+                                            style={{
+                                                width: "24px",
+                                                height: "24px",
+                                                fontSize: "10px",
+                                            }}
+                                        >
+                                            {member.charAt(0).toUpperCase()}
+                                        </div>
+                                        <span
+                                            className="small text-dark text-truncate"
+                                            title={member}
+                                        >
+                                            {member}
+                                        </span>
                                     </div>
-                                    <span
-                                        className="small text-dark text-truncate"
-                                        title={member}
-                                    >
-                                        {member}
-                                    </span>
+                                    {group.adminEmail === currentUserEmail && member !== group.adminEmail && (
+                                        <button
+                                            className="btn btn-sm btn-outline-danger py-0 px-1"
+                                            onClick={() => handleRemoveMember(member)}
+                                            title="Remove member"
+                                        >
+                                            <i className="bi bi-x-lg" style={{ fontSize: "10px" }}></i>
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -135,6 +208,62 @@ function GroupCard({ group, onUpdate }) {
                     </div>
                 )}
             </div>
+
+            {/* Delete Group Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Delete Group</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowDeleteModal(false)}
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <p>Are you sure you want to delete this group?</p>
+                                <div className="alert alert-warning">
+                                    <strong>{group.name}</strong><br />
+                                    Members: {group.membersEmail.length}
+                                </div>
+                                <p className="text-danger small">
+                                    <i className="bi bi-exclamation-triangle me-1"></i>
+                                    This will delete all expenses in this group. This action cannot be undone.
+                                </p>
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowDeleteModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    onClick={handleDeleteGroup}
+                                    disabled={deleting}
+                                >
+                                    {deleting ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2"></span>
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-trash me-2"></i>
+                                            Delete Group
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
