@@ -19,7 +19,7 @@ function UserHeader() {
                 {/* Brand Logo */}
                 <Link
                     className="navbar-brand fw-bold fs-4 d-flex align-items-center"
-                    to="/groups"
+                    to="/dashboard"
                 >
                     <span className="text-primary">Merge</span>Money
                 </Link>
@@ -36,6 +36,14 @@ function UserHeader() {
                 <div className="collapse navbar-collapse" id="userNavbar">
                     {/* Primary App Navigation */}
                     <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                        <li className="nav-item">
+                            <Link
+                                className={`nav-link px-3 ${isActive("/dashboard")}`}
+                                to="/dashboard"
+                            >
+                                <i className="bi bi-speedometer2 me-1"></i> Dashboard
+                            </Link>
+                        </li>
                         <li className="nav-item">
                             <Link
                                 className={`nav-link px-3 ${isActive("/groups")}`}

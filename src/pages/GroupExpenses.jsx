@@ -205,7 +205,7 @@ function GroupExpenses() {
                                                 <span className="fw-bold">₹{member.totalPaid.toFixed(2)}</span>
                                             </div>
                                             <div className="d-flex justify-content-between mb-2">
-                                                <span className="text-muted">Owes:</span>
+                                                <span className="text-muted">Share:</span>
                                                 <span className="fw-bold">₹{member.totalOwed.toFixed(2)}</span>
                                             </div>
                                             <hr />

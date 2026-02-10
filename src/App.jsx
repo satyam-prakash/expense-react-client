@@ -54,7 +54,7 @@ function App() {
         path="/"
         element={
           userDetails ? (
-            <Navigate to="/groups" />
+            <Navigate to="/dashboard" />
           ) : (
             <AppLayout>
               <Home />
@@ -64,17 +64,17 @@ function App() {
       />
       <Route
         path="/register"
-        element={userDetails ? <Navigate to="/groups" /> : <Register />}
+        element={userDetails ? <Navigate to="/dashboard" /> : <Register />}
       />
 
       <Route
         path="/login"
-        element={userDetails ? <Navigate to="/groups" /> : <Login />}
+        element={userDetails ? <Navigate to="/dashboard" /> : <Login />}
       />
 
       <Route
         path="/reset-password"
-        element={userDetails ? <Navigate to="/groups" /> : <ResetPassword />}
+        element={userDetails ? <Navigate to="/dashboard" /> : <ResetPassword />}
       />
 
       <Route
