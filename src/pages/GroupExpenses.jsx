@@ -109,6 +109,17 @@ function GroupExpenses() {
         setShowDeleteModal(true);
     };
 
+    const handleSettleExpense = async (expenseId) => {
+        if (!window.confirm("Are you sure you want to settle this expense? All splits will be marked as paid.")) return;
+        try {
+            await axios.patch(`${serverEndpoint}/expenses/${expenseId}/settle`, {}, { withCredentials: true });
+            await fetchGroupData();
+            alert("Expense settled successfully!");
+        } catch (error) {
+            console.error("Error settling expense:", error);
+            alert(error.response?.data?.message || "Failed to settle expense");
+        }
+    };
 
     if (loading) {
         return (
@@ -135,7 +146,7 @@ function GroupExpenses() {
             <nav aria-label="breadcrumb">
                 <ol className="breadcrumb">
                     <li className="breadcrumb-item">
-                        <Link to="/dashboard">Groups</Link>
+                        <Link to="/groups">Groups</Link>
                     </li>
                     <li className="breadcrumb-item active">{group?.name || "Expense Details"}</li>
                 </ol>
@@ -144,8 +155,8 @@ function GroupExpenses() {
             {/* Group Header */}
             <div className="card shadow-sm mb-4">
                 <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div>
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                        <div className="mb-3 mb-md-0">
                             <h2 className="fw-bold mb-2">{group?.name}</h2>
                             <p className="text-muted mb-0">{group?.description}</p>
                             {group?.isSettled && (
@@ -155,7 +166,7 @@ function GroupExpenses() {
                                 </span>
                             )}
                         </div>
-                        <div className="d-flex gap-2">
+                        <div className="d-grid gap-2 d-md-flex justify-content-md-end">
                             {!group?.isSettled && (
                                 <button
                                     className="btn btn-success"
@@ -179,153 +190,266 @@ function GroupExpenses() {
                 </div>
             </div>
 
-            {/* Balance Summary */}
-            <div className="card shadow-sm mb-4">
-                <div className="card-header bg-white">
-                    <h5 className="mb-0">
-                        <i className="bi bi-wallet2 me-2"></i>
-                        Balance Summary
-                    </h5>
-                </div>
-                <div className="card-body">
-                    <div className="row g-3">
-                        {balanceSummary.map((member) => (
-                            <div key={member.email} className="col-md-6 col-lg-4">
-                                <div className={`card h-100 ${member.netBalance > 0 ? 'border-success' : member.netBalance < 0 ? 'border-danger' : 'border-secondary'}`}>
-                                    <div className="card-body">
-                                        <h6 className="card-title">
-                                            {member.email}
-                                            {member.email === currentUserEmail && (
-                                                <span className="badge bg-primary ms-2">You</span>
-                                            )}
-                                        </h6>
-                                        <div className="mt-3">
-                                            <div className="d-flex justify-content-between mb-2">
-                                                <span className="text-muted">Paid:</span>
-                                                <span className="fw-bold">₹{member.totalPaid.toFixed(2)}</span>
-                                            </div>
-                                            <div className="d-flex justify-content-between mb-2">
-                                                <span className="text-muted">Share:</span>
-                                                <span className="fw-bold">₹{member.totalOwed.toFixed(2)}</span>
-                                            </div>
-                                            <hr />
-                                            <div className="d-flex justify-content-between">
-                                                <span className="fw-bold">Net Balance:</span>
-                                                <span className={`fw-bold ${member.netBalance > 0 ? 'text-success' : member.netBalance < 0 ? 'text-danger' : 'text-secondary'}`}>
-                                                    {member.netBalance > 0 && '+'}
-                                                    ₹{member.netBalance.toFixed(2)}
-                                                </span>
-                                            </div>
-                                            {member.netBalance > 0 && (
-                                                <small className="text-success d-block mt-2">
-                                                    <i className="bi bi-arrow-down-circle me-1"></i>
-                                                    Gets back
-                                                </small>
-                                            )}
-                                            {member.netBalance < 0 && (
-                                                <small className="text-danger d-block mt-2">
-                                                    <i className="bi bi-arrow-up-circle me-1"></i>
-                                                    Needs to pay
-                                                </small>
-                                            )}
-                                            {member.netBalance === 0 && (
-                                                <small className="text-secondary d-block mt-2">
-                                                    <i className="bi bi-check-circle me-1"></i>
-                                                    All settled
-                                                </small>
-                                            )}
+            {/* Balance Summary - Modern Cards */}
+            <div className="row mb-5">
+                <div className="col-12">
+                    <div className="card shadow-sm border-0">
+                        <div className="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                            <h4 className="fw-bold mb-0 text-dark mb-2 mb-md-0">
+                                <i className="bi bi-pie-chart-fill me-2 text-primary"></i>
+                                Balance Summary
+                            </h4>
+                            {group?.isSettled && (
+                                <span className="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+                                    All Settled
+                                </span>
+                            )}
+                        </div>
+                        <div className="card-body p-3 p-md-4">
+                            {balanceSummary.length === 0 ? (
+                                <div className="text-center py-4 text-muted">
+                                    <p className="mb-0">No expenses to summarize yet.</p>
+                                </div>
+                            ) : (
+                                <div className="row g-3 g-md-4">
+                                    {/* User's Net Balance Highlight */}
+                                    {balanceSummary.map(member => {
+                                        if (member.email === currentUserEmail) {
+                                            return (
+                                                <div key={member.email} className="col-12 mb-2">
+                                                    <div className={`p-3 p-md-4 rounded-4 ${member.netBalance > 0 ? 'bg-success bg-opacity-10 border border-success' :
+                                                        member.netBalance < 0 ? 'bg-danger bg-opacity-10 border border-danger' :
+                                                            'bg-light border'
+                                                        }`}>
+                                                        <div className="d-flex align-items-center justify-content-between">
+                                                            <div>
+                                                                <h6 className="text-uppercase fw-bold text-muted mb-1" style={{ fontSize: '0.85rem', letterSpacing: '1px' }}>
+                                                                    Your Position
+                                                                </h6>
+                                                                <h2 className={`display-6 fw-bold mb-0 fs-1 ${member.netBalance > 0 ? 'text-success' :
+                                                                    member.netBalance < 0 ? 'text-danger' : 'text-secondary'
+                                                                    }`}>
+                                                                    {member.netBalance > 0 ? 'You are owed' : member.netBalance < 0 ? 'You owe' : 'All settled'}
+                                                                    <span className="ms-0 ms-md-3 d-block d-md-inline mt-1 mt-md-0">
+                                                                        {member.netBalance !== 0 && `₹${Math.abs(member.netBalance).toFixed(2)}`}
+                                                                    </span>
+                                                                </h2>
+                                                            </div>
+                                                            <div className={`rounded-circle p-2 p-md-3 d-flex align-items-center justify-content-center flex-shrink-0 ${member.netBalance > 0 ? 'bg-success text-white' :
+                                                                member.netBalance < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'
+                                                                }`} style={{ width: '50px', height: '50px' }}>
+                                                                <i className={`bi ${member.netBalance > 0 ? 'bi-graph-up-arrow' :
+                                                                    member.netBalance < 0 ? 'bi-graph-down-arrow' : 'bi-check-lg'
+                                                                    } fs-4`}></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })}
+
+                                    {/* Other Members List */}
+                                    <div className="col-12">
+                                        <h6 className="text-muted fw-bold mb-3 text-uppercase small" style={{ letterSpacing: '1px' }}>Group Balances</h6>
+                                        <div className="list-group list-group-flush rounded-3 border">
+                                            {balanceSummary.map((member) => (
+                                                <div key={member.email} className="list-group-item p-3 d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between">
+                                                    <div className="d-flex align-items-center mb-2 mb-sm-0">
+                                                        <div className="rounded-circle bg-light d-flex align-items-center justify-content-center me-3 border flex-shrink-0"
+                                                            style={{ width: '40px', height: '40px', fontSize: '1rem', fontWeight: 'bold', color: '#555' }}>
+                                                            {member.email.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <h6 className="mb-0 fw-bold text-dark text-break">
+                                                                {member.email === currentUserEmail ? 'You' : member.email.split('@')[0]}
+                                                                {member.email === currentUserEmail && <span className="badge bg-primary ms-2" style={{ fontSize: '0.7em' }}>YOU</span>}
+                                                            </h6>
+                                                            <small className="text-muted d-block">
+                                                                Paid: ₹{member.totalPaid.toFixed(2)} • Share: ₹{member.totalOwed.toFixed(2)}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-end align-self-end align-self-sm-center">
+                                                        <h6 className={`fw-bold mb-0 ${member.netBalance > 0.01 ? 'text-success' :
+                                                            member.netBalance < -0.01 ? 'text-danger' : 'text-secondary'
+                                                            }`}>
+                                                            {member.netBalance > 0 ? '+' : ''}₹{member.netBalance.toFixed(2)}
+                                                        </h6>
+                                                        <span className={`badge rounded-pill ${member.netBalance > 0.01 ? 'bg-success bg-opacity-10 text-success' :
+                                                            member.netBalance < -0.01 ? 'bg-danger bg-opacity-10 text-danger' : 'bg-secondary bg-opacity-10 text-secondary'
+                                                            }`}>
+                                                            {member.netBalance > 0.01 ? 'Gets back' : member.netBalance < -0.01 ? 'Owes' : 'Settled'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Expenses List */}
-            <div className="card shadow-sm">
-                <div className="card-header bg-white">
-                    <h5 className="mb-0">
-                        <i className="bi bi-receipt me-2"></i>
-                        Expenses ({expenses.length})
-                    </h5>
-                </div>
-                <div className="card-body">
-                    {expenses.length === 0 ? (
-                        <div className="text-center py-5 text-muted">
+            <div className="mb-4">
+                <h5 className="mb-3">
+                    <i className="bi bi-receipt me-2"></i>
+                    Expenses ({expenses.length})
+                </h5>
+
+                {expenses.length === 0 ? (
+                    <div className="card shadow-sm">
+                        <div className="card-body text-center py-5 text-muted">
                             <i className="bi bi-inbox display-4 d-block mb-3 opacity-25"></i>
-                            <p>No expenses yet</p>
+                            <p className="mb-0">No expenses yet</p>
                         </div>
-                    ) : (
-                        <div className="table-responsive">
-                            <table className="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Title</th>
-                                        <th>Category</th>
-                                        <th>Paid By</th>
-                                        <th>Amount</th>
-                                        <th>Split Type</th>
-                                        {!group?.isSettled && <th>Actions</th>}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {expenses.map((expense) => (
-                                        <tr key={expense._id}>
-                                            <td>{new Date(expense.date).toLocaleDateString()}</td>
-                                            <td>
-                                                <strong>{expense.title}</strong>
-                                                {expense.description && (
-                                                    <small className="d-block text-muted">
-                                                        {expense.description}
-                                                    </small>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className="badge bg-light text-dark">
-                                                    {expense.category}
-                                                </span>
-                                            </td>
-                                            <td>{expense.paidBy.name || expense.paidBy.email}</td>
-                                            <td className="fw-bold">₹{expense.amount.toFixed(2)}</td>
-                                            <td>
-                                                <span className="badge bg-info">
-                                                    {expense.splitType}
-                                                </span>
-                                            </td>
-                                            {!group?.isSettled && (
-                                                <td>
-                                                    <div className="btn-group btn-group-sm">
-                                                        {expense.createdBy === currentUserEmail && (
-                                                            <>
-                                                                <button
-                                                                    className="btn btn-outline-primary"
-                                                                    onClick={() => handleEditClick(expense)}
-                                                                    title="Edit"
-                                                                >
-                                                                    <i className="bi bi-pencil"></i>
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-outline-danger"
-                                                                    onClick={() => handleDeleteClick(expense)}
-                                                                    title="Delete"
-                                                                >
-                                                                    <i className="bi bi-trash"></i>
-                                                                </button>
-                                                            </>
-                                                        )}
+                    </div>
+                ) : (
+                    <div className="row g-3">
+                        {expenses.map((expense) => {
+                            const categoryColors = {
+                                Food: '#e74c3c',
+                                Transport: '#3498db',
+                                Shopping: '#e67e22',
+                                Entertainment: '#9b59b6',
+                                Bills: '#1abc9c',
+                                Health: '#2ecc71',
+                                Travel: '#f39c12',
+                                Other: '#95a5a6'
+                            };
+                            const borderColor = categoryColors[expense.category] || '#6c757d';
+                            const isExpenseSettled = expense.splitDetails.every(split => split.isPaid);
+
+                            return (
+                                <div key={expense._id} className="col-12">
+                                    <div className={`card shadow-sm border-0 mb-3 ${isExpenseSettled ? 'bg-light opacity-75' : ''}`}>
+                                        <div className="card-body p-4">
+                                            <div className="d-flex gx-0">
+                                                {/* Date Box */}
+                                                <div className="d-flex flex-column align-items-center justify-content-center bg-light rounded-3 border p-2 text-center" style={{ width: '70px', height: '70px' }}>
+                                                    <span className="text-uppercase fw-bold text-muted small" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>
+                                                        {new Date(expense.date).toLocaleString('default', { month: 'short' })}
+                                                    </span>
+                                                    <span className="display-6 fw-bold text-dark lh-1">
+                                                        {new Date(expense.date).getDate()}
+                                                    </span>
+                                                </div>
+
+                                                {/* Expense Content */}
+                                                <div className="flex-grow-1 ms-3 ms-md-4">
+                                                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-start">
+                                                        <div>
+                                                            <div className="d-flex align-items-center gap-2 mb-1">
+                                                                <h5 className="card-title fw-bold mb-0 text-dark" style={{ fontSize: '1.25rem' }}>{expense.title}</h5>
+                                                                <span className="badge rounded-pill" style={{ backgroundColor: `${categoryColors[expense.category] || '#6c757d'}20`, color: categoryColors[expense.category] || '#6c757d', border: `1px solid ${categoryColors[expense.category] || '#6c757d'}40` }}>
+                                                                    {expense.category}
+                                                                </span>
+                                                                {isExpenseSettled && (
+                                                                    <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill">
+                                                                        <i className="bi bi-check-circle-fill me-1"></i>Settled
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-muted small mb-2 text-truncate" style={{ maxWidth: '300px' }}>
+                                                                {expense.description || "No description provided"}
+                                                            </p>
+                                                            <div className="d-flex align-items-center text-muted small">
+                                                                <div className="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center me-2" style={{ width: '24px', height: '24px' }}>
+                                                                    <i className="bi bi-person-fill" style={{ fontSize: '0.75rem' }}></i>
+                                                                </div>
+                                                                Paid by <span className="fw-bold text-dark ms-1">
+                                                                    {expense.paidBy.email === currentUserEmail ? 'You' : (expense.paidBy.name || expense.paidBy.email.split('@')[0])}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Amount & Actions */}
+                                                        <div className="text-md-end mt-3 mt-md-0">
+                                                            <h3 className="text-primary fw-bold mb-2">₹{expense.amount.toFixed(2)}</h3>
+                                                            <div className="d-flex gap-2 justify-content-md-end">
+                                                                {!isExpenseSettled && !group?.isSettled && (
+                                                                    <button
+                                                                        className="btn btn-sm btn-outline-success rounded-pill px-3"
+                                                                        onClick={() => handleSettleExpense(expense._id)}
+                                                                        title="Mark entire expense as settled"
+                                                                    >
+                                                                        <i className="bi bi-check2-circle me-1"></i>Settle
+                                                                    </button>
+                                                                )}
+                                                                {!group?.isSettled && expense.createdBy === currentUserEmail && (
+                                                                    <>
+                                                                        <button
+                                                                            className="btn btn-sm btn-light text-primary border rounded-circle"
+                                                                            onClick={() => handleEditClick(expense)}
+                                                                            title="Edit Expense"
+                                                                            style={{ width: '32px', height: '32px' }}
+                                                                        >
+                                                                            <i className="bi bi-pencil-fill" style={{ fontSize: '0.8rem' }}></i>
+                                                                        </button>
+                                                                        <button
+                                                                            className="btn btn-sm btn-light text-danger border rounded-circle"
+                                                                            onClick={() => handleDeleteClick(expense)}
+                                                                            title="Delete Expense"
+                                                                            style={{ width: '32px', height: '32px' }}
+                                                                        >
+                                                                            <i className="bi bi-trash-fill" style={{ fontSize: '0.8rem' }}></i>
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
+
+                                                    {/* Split Visuals */}
+                                                    <div className="mt-4 pt-3 border-top">
+                                                        <div className="d-flex justify-content-between align-items-center mb-3">
+                                                            <small className="text-uppercase text-muted fw-bold" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>
+                                                                Split Details ({expense.splitType})
+                                                            </small>
+                                                        </div>
+                                                        <div className="d-flex flex-wrap gap-2">
+                                                            {expense.splitDetails.map((split, idx) => (
+                                                                <div key={idx}
+                                                                    className={`d-flex align-items-center rounded-pill pe-3 ps-1 py-1 border ${split.isPaid
+                                                                        ? 'bg-success bg-opacity-10 border-success border-opacity-25'
+                                                                        : split.email === currentUserEmail
+                                                                            ? 'bg-primary bg-opacity-5 border-primary border-opacity-25'
+                                                                            : 'bg-white'
+                                                                        }`}
+                                                                    title={`${split.email} - ₹${split.amount}`}
+                                                                >
+                                                                    <div
+                                                                        className={`rounded-circle d-flex align-items-center justify-content-center me-2 text-white fw-bold small ${split.isPaid ? 'bg-success' : split.email === currentUserEmail ? 'bg-primary' : 'bg-secondary'
+                                                                            }`}
+                                                                        style={{ width: '28px', height: '28px', fontSize: '0.75rem' }}
+                                                                    >
+                                                                        {split.email.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                    <div className="d-flex flex-column lh-1">
+                                                                        <span className="fw-bold text-dark small mb-0" style={{ fontSize: '0.8rem' }}>
+                                                                            {split.email === currentUserEmail ? 'You' : split.email.split('@')[0]}
+                                                                        </span>
+                                                                        <span className={`small ${split.isPaid ? 'text-success' : 'text-muted'}`} style={{ fontSize: '0.7rem' }}>
+                                                                            ₹{split.amount.toFixed(0)} {split.isPaid && <i className="bi bi-check-circle-fill ms-1"></i>}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* Settle Confirmation Modal */}
