@@ -60,6 +60,12 @@ function Login() {
                     body,
                     config
                 );
+                
+                // Store token in localStorage
+                if (response.data.token) {
+                    localStorage.setItem('jwtToken', response.data.token);
+                }
+                
                 // setUser(response.data.user);
                 dispatch({
                     type: SET_USER,
@@ -84,6 +90,12 @@ function Login() {
                 body,
                 { withCredentials: true }
             );
+            
+            // Store token in localStorage
+            if (response.data.token) {
+                localStorage.setItem('jwtToken', response.data.token);
+            }
+            
             dispatch({
                 type: SET_USER,
                 payload: response.data.user,
